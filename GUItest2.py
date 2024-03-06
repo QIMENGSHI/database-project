@@ -179,22 +179,42 @@ def event_management(root):
     conn.close()
 
 
-def delete_member(event_id, root):
+def delete_member(member_id, root):
     print("Begin deletion")
-    print(event_id)
+    print(member_id)
     conn = connect_db()
     if conn is not None:
         cur = conn.cursor()
         try:
+            # Fetch student ID from StudentMembership
+            cur.execute(
+                "SELECT StudentID FROM StudentMembership WHERE MembershipID = %s", (member_id,))
+            student_id = cur.fetchone()[0]
+            print(student_id)
+
             print("Deleting")
-            cur.execute("DELETE FROM Event WHERE EventID = %s", (event_id,))
+            cur.execute("""BEGIN;
+            DELETE FROM EventRegistration 
+            WHERE MembershipID = %s;
+            
+            DELETE FROM StudentMembership
+            WHERE MembershipID = %s;
+            
+            DELETE FROM Student
+            WHERE StudentID = %s;
+            
+            DELETE FROM Membership
+            WHERE MembershipID = %s;
+            
+            COMMIT;""", (member_id, member_id, student_id, member_id))
+
             conn.commit()
             print("Deleted")
             messagebox.showinfo(
-                "Success", "Event deleted successfully.", parent=root)
+                "Success", "Member deleted successfully.", parent=root)
             print("Message shown")
             # Optionally refresh the event management interface
-            event_management(root)
+            membership_management(root)
         except Exception as e:
             messagebox.showerror("Error", str(e), parent=root)
         finally:
@@ -202,22 +222,31 @@ def delete_member(event_id, root):
             conn.close()
 
 
-def update_member(event_id, event_name_entry, event_date_entry, update_member_window, root):
-    event_name = event_name_entry.get()
-    event_date = event_date_entry.get()
+def update_member(member_id, member_name_entry, member_email_entry, membership_expiry_date_entry, membership_type_entry, update_member_window, root):
+    member_name = member_name_entry.get()
+    member_email = member_email_entry.get()
+    membership_expiry_date = membership_expiry_date_entry.get()
+    membership_type = membership_type_entry.get()
 
     print("Begin update")
-    print(event_id)
+    print(member_id)
     conn = connect_db()
     if conn is not None:
         cur = conn.cursor()
         try:
-            cur.execute("UPDATE Event SET EventName = %s, EventDate = %s WHERE EventID = %s",
-                        (event_name, event_date, event_id))
+            cur.execute("""BEGIN;
+            UPDATE Membership
+            SET MembershipType = %s, ExpireDate = %s
+            WHERE MembershipID = %s;
+            
+            UPDATE Student
+            SET Name = %s, Email = %s
+            WHERE StudentID = (SELECT StudentID FROM StudentMembership WHERE MembershipID = %s);
+            COMMIT;""", (membership_type, membership_expiry_date, member_id, member_name, member_email, member_id))
             conn.commit()
             messagebox.showinfo(
-                "Success", "Event updated successfully.", parent=update_member_window)
-            event_management(root)
+                "Success", "Member updated successfully.", parent=update_member_window)
+            membership_management(root)
         except Exception as e:
             messagebox.showerror("Error", str(e), parent=update_member_window)
         finally:
@@ -225,27 +254,39 @@ def update_member(event_id, event_name_entry, event_date_entry, update_member_wi
             conn.close()
 
 
-def update_member_window(event_id, root):
+def update_member_window(membership_id, root):
     print("Begin update window")
     update_member_window = tk.Toplevel(root)
-    update_member_window.title("Update Event")
+    update_member_window.title("Update Membership")
 
-    # Event Name Entry
-    tk.Label(update_member_window, text="Event Name:").grid(
+    # Member Name
+    tk.Label(update_member_window, text="Member Name:").grid(
         row=0, column=0, padx=10, pady=10)
-    event_name_entry = tk.Entry(update_member_window)
-    event_name_entry.grid(row=0, column=1, padx=10, pady=10)
+    member_name_entry = tk.Entry(update_member_window)
+    member_name_entry.grid(row=0, column=1, padx=10, pady=10)
 
-    # Event Date Entry
-    tk.Label(update_member_window, text="Event Date (YYYY-MM-DD):").grid(row=1,
-                                                                         column=0, padx=10, pady=10)
-    event_date_entry = tk.Entry(update_member_window)
-    event_date_entry.grid(row=1, column=1, padx=10, pady=10)
+    # Member Email
+    tk.Label(update_member_window, text="Member Email:").grid(row=1,
+                                                              column=0, padx=10, pady=10)
+    member_email_entry = tk.Entry(update_member_window)
+    member_email_entry.grid(row=1, column=1, padx=10, pady=10)
+
+    # Membership expiry date
+    tk.Label(update_member_window, text="Membership Expiry Date (YYYY-MM-DD):").grid(row=2,
+                                                                                     column=0, padx=10, pady=10)
+    membership_expiry_date_entry = tk.Entry(update_member_window)
+    membership_expiry_date_entry.grid(row=2, column=1, padx=10, pady=10)
+
+    # Membership type
+    tk.Label(update_member_window, text="Membership Type:").grid(row=3,
+                                                                 column=0, padx=10, pady=10)
+    membership_type_entry = tk.Entry(update_member_window)
+    membership_type_entry.grid(row=3, column=1, padx=10, pady=10)
 
     # Submit Button
-    submit_btn = tk.Button(update_member_window, text="Submit", command=lambda: update_event(
-        event_id, event_name_entry, event_date_entry, update_member_window, root))
-    submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
+    submit_btn = tk.Button(update_member_window, text="Submit", command=lambda: update_member(
+        membership_id, member_name_entry, member_email_entry, membership_expiry_date_entry, membership_type_entry, update_member_window, root))
+    submit_btn.grid(row=4, column=0, columnspan=2, pady=10)
 
 
 def membership_management(root):
