@@ -466,10 +466,9 @@ def event_registration_management(root):
     # Section for displaying events
     ttk.Label(event_reg_window, text="Events").grid(row=0, column=0, columnspan=3)
     for i, event in enumerate(events):
-        ttk.Label(event_reg_window, text=f"{
-                  event[1]} ({event[2]})").grid(row=i+1, column=0)
+        ttk.Label(event_reg_window, text=f"{event[1]} ({event[2]})").grid(row=i+1, column=0)
         ttk.Label(event_reg_window, text=f"Registered Members: {get_num_of_event_registrations(event[0])}").grid(
-            row=i, column=2)
+            row=i+2, column=2)
         ttk.Button(event_reg_window, text="Register", command=lambda event_id=event[0]: register_for_event(
             event_id, event_reg_window)).grid(row=i+1, column=1)
         ttk.Button(event_reg_window, text="Delete", command=lambda event_id=event[0]: delete_registration_prompt(event_id, event_reg_window, root)).grid(row=i+1, column=2)
@@ -488,12 +487,11 @@ def create_board_member_window():
     window.title("Board Member Management")
 
     # Buttons for different management options
-    ttk.Button(window, text="Event Management", command=lambda: event_management(
-        window)).grid(column=0, row=0, sticky=tk.W, pady=10)
-    ttk.Button(window, text="Membership Management", command=lambda: membership_management(window)).grid(
-        column=0, row=1, sticky=tk.W, pady=10)
-    ttk.Button(window, text="EventRegistration Management",
-               command=event_registration_management).grid(column=0, row=4, sticky=tk.W, pady=10)
+    ttk.Button(window, text="Event Management", command=lambda: event_management(window)).grid(column=0, row=0, sticky=tk.W, pady=10)
+    ttk.Button(window, text="Membership Management", command=lambda: membership_management(window)).grid(column=0, row=1, sticky=tk.W, pady=10)
+    
+    # Corrected to pass 'window' as the argument to event_registration_management
+    ttk.Button(window, text="EventRegistration Management", command=lambda: event_registration_management(window)).grid(column=0, row=4, sticky=tk.W, pady=10)
 
 
 def verify_membership():
