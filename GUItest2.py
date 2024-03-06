@@ -8,8 +8,8 @@ def connect_db():
     try:
         conn = psycopg2.connect(
             dbname='sosadatabase',
-            user='sosadatabase',  # postgres
-            password='Qn6616',  # mQHiLhyE5@h728CEcD
+            user='postgres',  # postgres
+            password='mQHiLhyE5@h728CEcD',  # mQHiLhyE5@h728CEcD
             host='localhost',
             port='5432'
         )
@@ -38,6 +38,29 @@ def submit_new_event(event_name_entry, event_date_entry, add_event_window, root)
             event_management(root)
         except Exception as e:
             messagebox.showerror("Error", str(e), parent=add_event_window)
+        finally:
+            cur.close()
+            conn.close()
+
+
+def delete_event(event_id, root):
+    print("Begin deletion")
+    print(event_id)
+    conn = connect_db()
+    if conn is not None:
+        cur = conn.cursor()
+        try:
+            print("Deleting")
+            cur.execute("DELETE FROM Event WHERE EventID = %s", (event_id,))
+            conn.commit()
+            print("Deleted")
+            messagebox.showinfo(
+                "Success", "Event deleted successfully.", parent=root)
+            print("Message shown")
+            # Optionally refresh the event management interface
+            event_management(root)
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=root)
         finally:
             cur.close()
             conn.close()
@@ -78,15 +101,25 @@ def event_management(root):
         cur = conn.cursor()
         cur.execute("SELECT EventID, EventName, EventDate FROM Event")
         events = cur.fetchall()
+        print(events)
+        # print(events[0][0])
 
     # Display the events in a simple table format
+    # Table headers
     headers = ['Event ID', 'Event Name', 'Event Date']
     for i, header in enumerate(headers):
         ttk.Label(root, text=header).grid(row=0, column=i)
+        ttk.Label(root, text="TEST").grid(row=0, column=i+1)
 
+    # Table data
     for i, event in enumerate(events):
         for j, value in enumerate(event):
+            print(value)
+            print(events[i][0])
             ttk.Label(root, text=value).grid(row=i+1, column=j)
+            # Delete button for each event, delete according to EventID
+            ttk.Button(root, text="Delete", command=lambda event_id=events[i][0]: delete_event(
+                event_id, root)).grid(row=i+1, column=len(headers))
 
     # Buttons for CRUD operations
     ttk.Button(root, text="Add Event", command=lambda: add_event(
