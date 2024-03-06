@@ -136,8 +136,6 @@ def add_event(root):
     pass
 
 
-
-
 def event_management(root):
     # Clear the current window
     for widget in root.winfo_children():
@@ -157,7 +155,6 @@ def event_management(root):
     headers = ['Event ID', 'Event Name', 'Event Date']
     for i, header in enumerate(headers):
         ttk.Label(root, text=header).grid(row=0, column=i)
-        ttk.Label(root, text="TEST").grid(row=0, column=i+1)
 
     # Table data
     for i, event in enumerate(events):
@@ -182,11 +179,120 @@ def event_management(root):
     conn.close()
 
 
-def membership_management():
+def delete_member(event_id, root):
+    print("Begin deletion")
+    print(event_id)
     conn = connect_db()
+    if conn is not None:
+        cur = conn.cursor()
+        try:
+            print("Deleting")
+            cur.execute("DELETE FROM Event WHERE EventID = %s", (event_id,))
+            conn.commit()
+            print("Deleted")
+            messagebox.showinfo(
+                "Success", "Event deleted successfully.", parent=root)
+            print("Message shown")
+            # Optionally refresh the event management interface
+            event_management(root)
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=root)
+        finally:
+            cur.close()
+            conn.close()
 
-    cur.close()
-    conn.close()
+
+def update_member(event_id, event_name_entry, event_date_entry, update_member_window, root):
+    event_name = event_name_entry.get()
+    event_date = event_date_entry.get()
+
+    print("Begin update")
+    print(event_id)
+    conn = connect_db()
+    if conn is not None:
+        cur = conn.cursor()
+        try:
+            cur.execute("UPDATE Event SET EventName = %s, EventDate = %s WHERE EventID = %s",
+                        (event_name, event_date, event_id))
+            conn.commit()
+            messagebox.showinfo(
+                "Success", "Event updated successfully.", parent=update_member_window)
+            event_management(root)
+        except Exception as e:
+            messagebox.showerror("Error", str(e), parent=update_member_window)
+        finally:
+            cur.close()
+            conn.close()
+
+
+def update_member_window(event_id, root):
+    print("Begin update window")
+    update_member_window = tk.Toplevel(root)
+    update_member_window.title("Update Event")
+
+    # Event Name Entry
+    tk.Label(update_member_window, text="Event Name:").grid(
+        row=0, column=0, padx=10, pady=10)
+    event_name_entry = tk.Entry(update_member_window)
+    event_name_entry.grid(row=0, column=1, padx=10, pady=10)
+
+    # Event Date Entry
+    tk.Label(update_member_window, text="Event Date (YYYY-MM-DD):").grid(row=1,
+                                                                         column=0, padx=10, pady=10)
+    event_date_entry = tk.Entry(update_member_window)
+    event_date_entry.grid(row=1, column=1, padx=10, pady=10)
+
+    # Submit Button
+    submit_btn = tk.Button(update_member_window, text="Submit", command=lambda: update_event(
+        event_id, event_name_entry, event_date_entry, update_member_window, root))
+    submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
+
+
+def membership_management(root):
+    # Clear the current window
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    # Fetch events from the database
+    conn = connect_db()
+    if conn is not None:
+        cur = conn.cursor()
+        cur.execute("""SELECT Membership.*, Student.*
+FROM StudentMembership
+INNER JOIN Student ON StudentMembership.StudentID = Student.StudentID
+INNER JOIN Membership ON StudentMembership.MembershipID = Membership.MembershipID;""")
+        student_members = cur.fetchall()
+        print(student_members)
+
+    # Display the events in a simple table format
+    # Table headers
+    headers = ['Membership Type', 'Name', 'Email']
+    for i, header in enumerate(headers):
+        ttk.Label(root, text=header).grid(row=0, column=i)
+
+    # Table data
+    for i, member in enumerate(student_members):
+        print(member)
+        member_info = [member[1], member[5], member[6]]
+        for j, value in enumerate(member_info):
+            # print(value)
+            # print(student_members[i][0])
+            ttk.Label(root, text=value).grid(row=i+1, column=j)
+
+            # Delete button for each event, delete according to EventID
+            ttk.Button(root, text="Delete", command=lambda event_id=student_members[i][0]: delete_member(
+                event_id, root)).grid(row=i+1, column=len(headers))
+
+            # Update button for each event, update according to EventID
+            ttk.Button(root, text="Update", command=lambda event_id=student_members[i][0]: update_member_window(
+                event_id, root)).grid(row=i+1, column=len(headers)+1)
+
+
+# def membership_management():
+#     conn = connect_db()
+
+#     cur.close()
+#     conn.close()
 
 
 def student_management():
@@ -217,7 +323,7 @@ def create_board_member_window():
     # Buttons for different management options
     ttk.Button(window, text="Event Management", command=lambda: event_management(
         window)).grid(column=0, row=0, sticky=tk.W, pady=10)
-    ttk.Button(window, text="Membership Management", command=membership_management).grid(
+    ttk.Button(window, text="Membership Management", command=lambda: membership_management(window)).grid(
         column=0, row=1, sticky=tk.W, pady=10)
     ttk.Button(window, text="Student Management", command=student_management).grid(
         column=0, row=2, sticky=tk.W, pady=10)
