@@ -17,137 +17,117 @@ def connect_db():
     except Exception as e:
         messagebox.showerror("Database Connection Error", str(e))
         return None
-
-
 def submit_new_event(event_name_entry, event_date_entry, add_event_window, root):
     # Function to insert the new event into the database
-    event_name = event_name_entry.get()
-    event_date = event_date_entry.get()
+        event_name = event_name_entry.get()
+        event_date = event_date_entry.get()
 
-    conn = connect_db()
-    if conn is not None:
-        cur = conn.cursor()
-        try:
-            cur.execute(
-                "INSERT INTO Event (EventName, EventDate) VALUES (%s, %s)", (event_name, event_date))
-            conn.commit()
-            messagebox.showinfo(
-                "Success", "Event added successfully.", parent=add_event_window)
-            add_event_window.destroy()  # Close the add event window
-            # Optionally refresh the event management interface
-            event_management(root)
-        except Exception as e:
-            messagebox.showerror("Error", str(e), parent=add_event_window)
-        finally:
-            cur.close()
-            conn.close()
-
-
+        conn = connect_db()
+        if conn is not None:
+            cur = conn.cursor()
+            try:
+                cur.execute("INSERT INTO Event (EventName, EventDate) VALUES (%s, %s)", (event_name, event_date))
+                conn.commit()
+                messagebox.showinfo("Success", "Event added successfully.", parent=add_event_window)
+                add_event_window.destroy()  # Close the add event window
+                event_management(root)  # Optionally refresh the event management interface
+            except Exception as e:
+                messagebox.showerror("Error", str(e), parent=add_event_window)
+            finally:
+                cur.close()
+                conn.close()
+    
 def add_event(root):
     # Function to open a new window for adding an event
-    add_event_window = tk.Toplevel(root)
-    add_event_window.title("Add New Event")
+        add_event_window = tk.Toplevel(root)
+        add_event_window.title("Add New Event")
 
     # Event Name Entry
-    tk.Label(add_event_window, text="Event Name:").grid(
-        row=0, column=0, padx=10, pady=10)
-    event_name_entry = tk.Entry(add_event_window)
-    event_name_entry.grid(row=0, column=1, padx=10, pady=10)
+        tk.Label(add_event_window, text="Event Name:").grid(row=0, column=0, padx=10, pady=10)
+        event_name_entry = tk.Entry(add_event_window)
+        event_name_entry.grid(row=0, column=1, padx=10, pady=10)
 
     # Event Date Entry
-    tk.Label(add_event_window, text="Event Date (YYYY-MM-DD):").grid(row=1,
-                                                                     column=0, padx=10, pady=10)
-    event_date_entry = tk.Entry(add_event_window)
-    event_date_entry.grid(row=1, column=1, padx=10, pady=10)
+        tk.Label(add_event_window, text="Event Date (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=10)
+        event_date_entry = tk.Entry(add_event_window)
+        event_date_entry.grid(row=1, column=1, padx=10, pady=10)
 
     # Submit Button
-    submit_btn = tk.Button(add_event_window, text="Submit", command=lambda: submit_new_event(
-        event_name_entry, event_date_entry, add_event_window, root))
-    submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
-    pass
-
-
+        submit_btn = tk.Button(add_event_window, text="Submit", command=lambda: submit_new_event(event_name_entry, event_date_entry, add_event_window, root))
+        submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
+        pass
 def event_management(root):
     # Clear the current window
-    for widget in root.winfo_children():
-        widget.destroy()
+        for widget in root.winfo_children():
+            widget.destroy()
 
     # Fetch events from the database
-    conn = connect_db()
-    if conn is not None:
-        cur = conn.cursor()
-        cur.execute("SELECT EventID, EventName, EventDate FROM Event")
-        events = cur.fetchall()
+        conn = connect_db()
+        if conn is not None:
+            cur = conn.cursor()
+            cur.execute("SELECT EventID, EventName, EventDate FROM Event")
+            events = cur.fetchall()
 
     # Display the events in a simple table format
-    headers = ['Event ID', 'Event Name', 'Event Date']
-    for i, header in enumerate(headers):
-        ttk.Label(root, text=header).grid(row=0, column=i)
+        headers = ['Event ID', 'Event Name', 'Event Date']
+        for i, header in enumerate(headers):
+            ttk.Label(root, text=header).grid(row=0, column=i)
 
-    for i, event in enumerate(events):
-        for j, value in enumerate(event):
-            ttk.Label(root, text=value).grid(row=i+1, column=j)
+        for i, event in enumerate(events):
+            for j, value in enumerate(event):
+                ttk.Label(root, text=value).grid(row=i+1, column=j)
 
     # Buttons for CRUD operations
-    ttk.Button(root, text="Add Event", command=lambda: add_event(
-        root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
-    ttk.Button(root, text="Update Event", command=lambda: update_event_prompt(
-        root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
-    ttk.Button(root, text="Delete Event", command=lambda: delete_event_prompt(
-        root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
+        ttk.Button(root, text="Add Event", command=lambda: add_event(
+            root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
+        ttk.Button(root, text="Update Event", command=lambda: update_event_prompt(
+            root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
+        ttk.Button(root, text="Delete Event", command=lambda: delete_event_prompt(
+            root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
 
-    cur.close()
-    conn.close()
-
-
-def add_event(root):
+        cur.close()
+        conn.close()
+    
+        
+    def add_event(root):
     # Function to open a new window for adding an event
-    add_event_window = tk.Toplevel(root)
-    add_event_window.title("Add New Event")
+        add_event_window = tk.Toplevel(root)
+        add_event_window.title("Add New Event")
 
-# Event Name Entry
-    tk.Label(add_event_window, text="Event Name:").grid(
-        row=0, column=0, padx=10, pady=10)
-    event_name_entry = tk.Entry(add_event_window)
-    event_name_entry.grid(row=0, column=1, padx=10, pady=10)
+    # Event Name Entry
+        tk.Label(add_event_window, text="Event Name:").grid(row=0, column=0, padx=10, pady=10)
+        event_name_entry = tk.Entry(add_event_window)
+        event_name_entry.grid(row=0, column=1, padx=10, pady=10)
 
-# Event Date Entry
-    tk.Label(add_event_window, text="Event Date (YYYY-MM-DD):").grid(row=1,
-                                                                     column=0, padx=10, pady=10)
-    event_date_entry = tk.Entry(add_event_window)
-    event_date_entry.grid(row=1, column=1, padx=10, pady=10)
+    # Event Date Entry
+        tk.Label(add_event_window, text="Event Date (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=10)
+        event_date_entry = tk.Entry(add_event_window)
+        event_date_entry.grid(row=1, column=1, padx=10, pady=10)
 
-# Submit Button
-    submit_btn = tk.Button(add_event_window, text="Submit", command=lambda: submit_new_event(
-        event_name_entry, event_date_entry, add_event_window, root))
-    submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
-    pass
+    # Submit Button
+        submit_btn = tk.Button(add_event_window, text="Submit", command=lambda: submit_new_event(event_name_entry, event_date_entry, add_event_window, root))
+        submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
+        pass
 
-
-def submit_new_event(event_name_entry, event_date_entry, add_event_window, root):
+    def submit_new_event(event_name_entry, event_date_entry, add_event_window, root):
     # Function to insert the new event into the database
-    event_name = event_name_entry.get()
-    event_date = event_date_entry.get()
+        event_name = event_name_entry.get()
+        event_date = event_date_entry.get()
 
-    conn = connect_db()
-    if conn is not None:
-        cur = conn.cursor()
-        try:
-            cur.execute(
-                "INSERT INTO Event (EventName, EventDate) VALUES (%s, %s)", (event_name, event_date))
-            conn.commit()
-            messagebox.showinfo(
-                "Success", "Event added successfully.", parent=add_event_window)
-            add_event_window.destroy()  # Close the add event window
-            # Optionally refresh the event management interface
-            event_management(root)
-        except Exception as e:
-            messagebox.showerror("Error", str(e), parent=add_event_window)
-        finally:
-            cur.close()
-            conn.close()
-
-
+        conn = connect_db()
+        if conn is not None:
+            cur = conn.cursor()
+            try:
+                cur.execute("INSERT INTO Event (EventName, EventDate) VALUES (%s, %s)", (event_name, event_date))
+                conn.commit()
+                messagebox.showinfo("Success", "Event added successfully.", parent=add_event_window)
+                add_event_window.destroy()  # Close the add event window
+                event_management(root)  # Optionally refresh the event management interface
+            except Exception as e:
+                messagebox.showerror("Error", str(e), parent=add_event_window)
+            finally:
+                cur.close()
+                conn.close()
 def verify_membership():
     conn = connect_db()
     if conn is not None:
