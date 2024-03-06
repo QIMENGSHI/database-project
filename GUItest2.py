@@ -66,6 +66,16 @@ def delete_event(event_id, root):
             conn.close()
 
 
+def update_event(event_id, root):
+    print("Begin update window")
+    update_event_window = tk.Toplevel(root)
+    update_event_window.title("Update Event")
+
+    # Inputs: Event Name, Event Date
+    # event_date_entry = tk.Entry(add_event_window)
+    # event_date_entry.grid(row=1, column=1, padx=10, pady=10)
+
+
 def add_event(root):
     # Function to open a new window for adding an event
     add_event_window = tk.Toplevel(root)
@@ -117,9 +127,14 @@ def event_management(root):
             print(value)
             print(events[i][0])
             ttk.Label(root, text=value).grid(row=i+1, column=j)
+
             # Delete button for each event, delete according to EventID
             ttk.Button(root, text="Delete", command=lambda event_id=events[i][0]: delete_event(
                 event_id, root)).grid(row=i+1, column=len(headers))
+
+            # Update button for each event, update according to EventID
+            ttk.Button(root, text="Update", command=lambda event_id=events[i][0]: update_event(
+                event_id, root)).grid(row=i+1, column=len(headers)+1)
 
     # Buttons for CRUD operations
     ttk.Button(root, text="Add Event", command=lambda: add_event(
