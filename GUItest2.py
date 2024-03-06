@@ -73,27 +73,34 @@ def register_for_event(event_id, parent_window):
     membership_id_entry.grid(row=0, column=1)
 
     # Submit button
-    submit_btn = tk.Button(reg_input_window, text="Submit", command=lambda: submit_event_registration(event_id, membership_id_entry.get(), reg_input_window))
+    submit_btn = tk.Button(reg_input_window, text="Submit", command=lambda: submit_event_registration(
+        event_id, membership_id_entry.get(), reg_input_window))
     submit_btn.grid(row=1, column=0, columnspan=2)
+
 
 def submit_event_registration(event_id, membership_id, window,):
     conn = connect_db()
     if conn is None:
-        messagebox.showwarning("Connection Failed", "Failed to connect to the database.")
+        messagebox.showwarning("Connection Failed",
+                               "Failed to connect to the database.")
         return
 
     try:
         cur = conn.cursor()
         # Check if the membership ID exists
-        cur.execute("SELECT * FROM Membership WHERE MembershipID = %s", (membership_id,))
+        cur.execute(
+            "SELECT * FROM Membership WHERE MembershipID = %s", (membership_id,))
         if cur.fetchone() is None:
-            messagebox.showerror("Registration Error", "Invalid Membership ID.")
+            messagebox.showerror("Registration Error",
+                                 "Invalid Membership ID.")
             return
-        
+
         # Insert the registration data into the database
-        cur.execute("INSERT INTO EventRegistration (MembershipID, EventID) VALUES (%s, %s)", (membership_id, event_id))
+        cur.execute("INSERT INTO EventRegistration (MembershipID, EventID) VALUES (%s, %s)",
+                    (membership_id, event_id))
         conn.commit()
-        messagebox.showinfo("Registration Successful", "You have successfully registered for the event.")
+        messagebox.showinfo("Registration Successful",
+                            "You have successfully registered for the event.")
         window.destroy()
         
     except Exception as e:
@@ -102,6 +109,7 @@ def submit_event_registration(event_id, membership_id, window,):
     finally:
         cur.close()
         conn.close()
+
 
 def submit_new_event(event_name_entry, event_date_entry, add_event_window, root):
     # Function to insert the new event into the database
@@ -391,14 +399,14 @@ INNER JOIN Membership ON StudentMembership.MembershipID = Membership.MembershipI
 
     # Display the events in a simple table format
     # Table headers
-    headers = ['Membership Type', 'Name', 'Email']
+    headers = ['Membership Type', 'Name', 'Email', 'Expiry Date']
     for i, header in enumerate(headers):
         ttk.Label(root, text=header).grid(row=0, column=i)
 
     # Table data
     for i, member in enumerate(student_members):
         print(member)
-        member_info = [member[1], member[5], member[6]]
+        member_info = [member[1], member[5], member[6], member[3]]
         for j, value in enumerate(member_info):
             # print(value)
             # print(student_members[i][0])
@@ -413,25 +421,21 @@ INNER JOIN Membership ON StudentMembership.MembershipID = Membership.MembershipI
                 event_id, root)).grid(row=i+1, column=len(headers)+1)
 
 
-# def membership_management():
-#     conn = connect_db()
-
-#     cur.close()
-#     conn.close()
-
-
-def student_management():
+def get_num_of_event_registrations(event_id):
     conn = connect_db()
+    if conn is None:
+        messagebox.showwarning("Connection Failed",
+                               "Failed to connect to the database.")
+        return
 
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM EventRegistration WHERE EventID = %s", (event_id,))
+    num_registrations = cur.fetchone()[0]
     cur.close()
     conn.close()
 
-
-def student_membership_management():
-    conn = connect_db()
-
-    cur.close()
-    conn.close()
+    return num_registrations
 
 
 def event_registration_management(root):
@@ -440,7 +444,8 @@ def event_registration_management(root):
         
     conn = connect_db()
     if conn is None:
-        messagebox.showwarning("Connection Failed", "Failed to connect to the database.")
+        messagebox.showwarning("Connection Failed",
+                               "Failed to connect to the database.")
         return
 
     cur = conn.cursor()
@@ -461,8 +466,12 @@ def event_registration_management(root):
     # Section for displaying events
     ttk.Label(event_reg_window, text="Events").grid(row=0, column=0, columnspan=3)
     for i, event in enumerate(events):
-        ttk.Label(event_reg_window, text=f"{event[1]} ({event[2]})").grid(row=i+1, column=0)
-        ttk.Button(event_reg_window, text="Register", command=lambda event_id=event[0]: register_for_event(event_id, event_reg_window)).grid(row=i+1, column=1)
+        ttk.Label(event_reg_window, text=f"{
+                  event[1]} ({event[2]})").grid(row=i+1, column=0)
+        ttk.Label(event_reg_window, text=f"Registered Members: {get_num_of_event_registrations(event[0])}").grid(
+            row=i, column=2)
+        ttk.Button(event_reg_window, text="Register", command=lambda event_id=event[0]: register_for_event(
+            event_id, event_reg_window)).grid(row=i+1, column=1)
         ttk.Button(event_reg_window, text="Delete", command=lambda event_id=event[0]: delete_registration_prompt(event_id, event_reg_window, root)).grid(row=i+1, column=2)
 
     # Visual separation
@@ -474,7 +483,6 @@ def event_registration_management(root):
         ttk.Label(event_reg_window, text=f"{reg[1]} ({reg[2]}), Membership ID: {reg[3]}").grid(row=len(events)+4+i, column=0, columnspan=2)
 
 
-
 def create_board_member_window():
     window = tk.Toplevel()
     window.title("Board Member Management")
@@ -484,14 +492,8 @@ def create_board_member_window():
         window)).grid(column=0, row=0, sticky=tk.W, pady=10)
     ttk.Button(window, text="Membership Management", command=lambda: membership_management(window)).grid(
         column=0, row=1, sticky=tk.W, pady=10)
-    ttk.Button(window, text="Student Management", command=student_management).grid(
-        column=0, row=2, sticky=tk.W, pady=10)
-    ttk.Button(window, text="StudentMembership Management",
-               command=student_membership_management).grid(column=0, row=3, sticky=tk.W, pady=10)
     ttk.Button(window, text="EventRegistration Management",
-               command=lambda: event_registration_management(window)).grid(column=0, row=4, sticky=tk.W, pady=10)
-
-    # Example function for one of the management options
+               command=event_registration_management).grid(column=0, row=4, sticky=tk.W, pady=10)
 
 
 def verify_membership():
