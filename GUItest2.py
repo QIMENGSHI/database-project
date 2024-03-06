@@ -136,79 +136,6 @@ def add_event(root):
     pass
 
 
-def update_event_date(event_id, new_date, update_event_window):
-    # Function to update the event date in the database
-    conn = connect_db()
-    if conn is not None:
-        cur = conn.cursor()
-        try:
-            cur.execute(
-                "UPDATE Event SET EventDate = %s WHERE EventID = %s", (new_date, event_id))
-            conn.commit()
-            messagebox.showinfo(
-                "Success", "Event date updated successfully.", parent=update_event_window)
-        except Exception as e:
-            messagebox.showerror("Error", str(e), parent=update_event_window)
-        finally:
-            cur.close()
-            conn.close()
-
-
-def ask_for_new_event_date(event_name, event_id, update_event_window, root):
-    # Clear the update event window
-    for widget in update_event_window.winfo_children():
-        widget.destroy()
-
-    # New label and entry for the new event date
-    tk.Label(update_event_window, text="Enter New Event Date (YYYY-MM-DD):").grid(
-        row=0, column=0, padx=10, pady=10)
-    event_date_entry = tk.Entry(update_event_window)
-    event_date_entry.grid(row=0, column=1, padx=10, pady=10)
-
-    # Button to submit the new event date
-    submit_btn = tk.Button(update_event_window, text="Update", command=lambda: update_event_date(
-        event_id, event_date_entry.get(), update_event_window))
-    submit_btn.grid(row=1, column=0, columnspan=2, pady=10)
-
-
-def check_event_exists(event_name, update_event_window, root):
-    print(f"Checking event: {event_name}")
-    conn = connect_db()
-    if conn is not None:
-        cur = conn.cursor()
-        try:
-            # Prepared statement with case-insensitive search
-            cur.execute("SELECT EventID FROM Event WHERE EventName ILIKE %s LIMIT 1", (event_name,))
-            event = cur.fetchone()  # Fetch the first matching event
-            print(f"Found event: {event}")
-            if event:
-                # Event exists, proceed to ask for new date
-                event_id = event[0]
-                ask_for_new_event_date(event_name, event_id, update_event_window, root)
-            else:
-                # Event does not exist
-                messagebox.showinfo("Event Update", "Event does not exist.")
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
-        finally:
-            cur.close()
-            conn.close()
-
-def update_event_prompt(root):
-    # Function to open a new window
-    update_event_window = tk.Toplevel(root)
-    update_event_window.title("update Event")
-
-    tk.Label(update_event_window, text="Enter Event Name:").grid(
-        row=0, column=0, padx=10, pady=10)
-    event_name_entry = tk.Entry(update_event_window)
-    event_name_entry.grid(row=0, column=1, padx=10, pady=10)
-
-    # Button to submit the event name
-    print(event_name_entry.get())
-    submit_btn = tk.Button(update_event_window, text="Submit", command=lambda: check_event_exists(
-        event_name_entry.get(), update_event_window, root))
-    submit_btn.grid(row=1, column=0, columnspan=2, pady=10)
 
 
 def event_management(root):
@@ -249,10 +176,6 @@ def event_management(root):
 
     # Buttons for CRUD operations
     ttk.Button(root, text="Add Event", command=lambda: add_event(
-        root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
-    ttk.Button(root, text="Update Event", command=lambda: update_event_prompt(
-        root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
-    ttk.Button(root, text="Delete Event", command=lambda: delete_event_prompt(
         root)).grid(columnspan=len(headers), sticky=tk.W, pady=10)
 
     cur.close()
