@@ -376,6 +376,23 @@ INNER JOIN Membership ON StudentMembership.MembershipID = Membership.MembershipI
                 event_id, root)).grid(row=i+1, column=len(headers)+1)
 
 
+def get_num_of_event_registrations(event_id):
+    conn = connect_db()
+    if conn is None:
+        messagebox.showwarning("Connection Failed",
+                               "Failed to connect to the database.")
+        return
+
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM EventRegistration WHERE EventID = %s", (event_id,))
+    num_registrations = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+
+    return num_registrations
+
+
 def event_registration_management():
     conn = connect_db()
     if conn is None:
@@ -397,6 +414,8 @@ def event_registration_management():
     for i, event in enumerate(events):
         ttk.Label(event_reg_window, text=f"{
                   event[1]} ({event[2]})").grid(row=i, column=0)
+        ttk.Label(event_reg_window, text=f"Registered Members: {get_num_of_event_registrations(event[0])}").grid(
+            row=i, column=2)
         ttk.Button(event_reg_window, text="Register", command=lambda event_id=event[0]: register_for_event(
             event_id, event_reg_window)).grid(row=i, column=1)
 
