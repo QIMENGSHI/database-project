@@ -19,6 +19,45 @@ def connect_db():
         return None
 
 
+def register_for_event(event_id, parent_window):
+    # Create the new window for MembershipID input
+    reg_input_window = tk.Toplevel(parent_window)
+    reg_input_window.title("Event Registration")
+
+    tk.Label(reg_input_window, text="Membership ID:").grid(row=0, column=0)
+    membership_id_entry = tk.Entry(reg_input_window)
+    membership_id_entry.grid(row=0, column=1)
+
+    # Submit button
+    submit_btn = tk.Button(reg_input_window, text="Submit", command=lambda: submit_event_registration(event_id, membership_id_entry.get(), reg_input_window))
+    submit_btn.grid(row=1, column=0, columnspan=2)
+
+def submit_event_registration(event_id, membership_id, window):
+    conn = connect_db()
+    if conn is None:
+        messagebox.showwarning("Connection Failed", "Failed to connect to the database.")
+        return
+
+    try:
+        cur = conn.cursor()
+        # Check if the membership ID exists
+        cur.execute("SELECT * FROM Membership WHERE MembershipID = %s", (membership_id,))
+        if cur.fetchone() is None:
+            messagebox.showerror("Registration Error", "Invalid Membership ID.")
+            return
+        
+        # Insert the registration data into the database
+        cur.execute("INSERT INTO EventRegistration (MembershipID, EventID) VALUES (%s, %s)", (membership_id, event_id))
+        conn.commit()
+        messagebox.showinfo("Registration Successful", "You have successfully registered for the event.")
+        window.destroy()
+    except Exception as e:
+        messagebox.showerror("Registration Error", str(e))
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
 def submit_new_event(event_name_entry, event_date_entry, add_event_window, root):
     # Function to insert the new event into the database
     event_name = event_name_entry.get()
@@ -311,9 +350,25 @@ def student_membership_management():
 
 def event_registration_management():
     conn = connect_db()
-
+    if conn is None:
+        messagebox.showwarning("Connection Failed", "Failed to connect to the database.")
+        return
+    
+    cur = conn.cursor()
+    cur.execute("SELECT EventID, EventName, EventDate FROM Event")
+    events = cur.fetchall()
     cur.close()
     conn.close()
+
+    # Create the new window for displaying events
+    event_reg_window = tk.Toplevel()
+    event_reg_window.title("Event Registration Management")
+
+    # Display the events
+    for i, event in enumerate(events):
+        ttk.Label(event_reg_window, text=f"{event[1]} ({event[2]})").grid(row=i, column=0)
+        ttk.Button(event_reg_window, text="Register", command=lambda event_id=event[0]: register_for_event(event_id, event_reg_window)).grid(row=i, column=1)
+
 
 
 def create_board_member_window():
