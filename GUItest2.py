@@ -376,27 +376,6 @@ INNER JOIN Membership ON StudentMembership.MembershipID = Membership.MembershipI
                 event_id, root)).grid(row=i+1, column=len(headers)+1)
 
 
-# def membership_management():
-#     conn = connect_db()
-
-#     cur.close()
-#     conn.close()
-
-
-def student_management():
-    conn = connect_db()
-
-    cur.close()
-    conn.close()
-
-
-def student_membership_management():
-    conn = connect_db()
-
-    cur.close()
-    conn.close()
-
-
 def event_registration_management():
     conn = connect_db()
     if conn is None:
@@ -431,14 +410,8 @@ def create_board_member_window():
         window)).grid(column=0, row=0, sticky=tk.W, pady=10)
     ttk.Button(window, text="Membership Management", command=lambda: membership_management(window)).grid(
         column=0, row=1, sticky=tk.W, pady=10)
-    ttk.Button(window, text="Student Management", command=student_management).grid(
-        column=0, row=2, sticky=tk.W, pady=10)
-    ttk.Button(window, text="StudentMembership Management",
-               command=student_membership_management).grid(column=0, row=3, sticky=tk.W, pady=10)
     ttk.Button(window, text="EventRegistration Management",
                command=event_registration_management).grid(column=0, row=4, sticky=tk.W, pady=10)
-
-    # Example function for one of the management options
 
 
 def verify_membership():
