@@ -15,19 +15,46 @@ def connect_db():
     except Exception as e:
         messagebox.showerror("Database Connection Error", str(e))
         return None
-def create_board_member_window():
-    window = tk.Toplevel()
-    window.title("Board Member Management")
+def submit_new_event(event_name_entry, event_date_entry, add_event_window, root):
+    # Function to insert the new event into the database
+        event_name = event_name_entry.get()
+        event_date = event_date_entry.get()
 
-    # Buttons for different management options
-    ttk.Button(window, text="Event Management", command=event_management).grid(column=0, row=0, sticky=tk.W, pady=10)
-    ttk.Button(window, text="Membership Management", command=membership_management).grid(column=0, row=1, sticky=tk.W, pady=10)
-    ttk.Button(window, text="Student Management", command=student_management).grid(column=0, row=2, sticky=tk.W, pady=10)
-    ttk.Button(window, text="StudentMembership Management", command=student_membership_management).grid(column=0, row=3, sticky=tk.W, pady=10)
-    ttk.Button(window, text="EventRegistration Management", command=event_registration_management).grid(column=0, row=4, sticky=tk.W, pady=10)
+        conn = connect_db()
+        if conn is not None:
+            cur = conn.cursor()
+            try:
+                cur.execute("INSERT INTO Event (EventName, EventDate) VALUES (%s, %s)", (event_name, event_date))
+                conn.commit()
+                messagebox.showinfo("Success", "Event added successfully.", parent=add_event_window)
+                add_event_window.destroy()  # Close the add event window
+                event_management(root)  # Optionally refresh the event management interface
+            except Exception as e:
+                messagebox.showerror("Error", str(e), parent=add_event_window)
+            finally:
+                cur.close()
+                conn.close()
+    
+def add_event(root):
+    # Function to open a new window for adding an event
+        add_event_window = tk.Toplevel(root)
+        add_event_window.title("Add New Event")
 
-    # Example function for one of the management options
-    def event_management(root):
+    # Event Name Entry
+        tk.Label(add_event_window, text="Event Name:").grid(row=0, column=0, padx=10, pady=10)
+        event_name_entry = tk.Entry(add_event_window)
+        event_name_entry.grid(row=0, column=1, padx=10, pady=10)
+
+    # Event Date Entry
+        tk.Label(add_event_window, text="Event Date (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=10)
+        event_date_entry = tk.Entry(add_event_window)
+        event_date_entry.grid(row=1, column=1, padx=10, pady=10)
+
+    # Submit Button
+        submit_btn = tk.Button(add_event_window, text="Submit", command=lambda: submit_new_event(event_name_entry, event_date_entry, add_event_window, root))
+        submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
+        pass
+def event_management(root):
     # Clear the current window
         for widget in root.winfo_children():
             widget.destroy()
@@ -55,47 +82,45 @@ def create_board_member_window():
 
         cur.close()
         conn.close()
+def membership_management():
+    conn = connect_db()
     
-        
-    def add_event(root):
-    # Function to open a new window for adding an event
-        add_event_window = tk.Toplevel(root)
-        add_event_window.title("Add New Event")
+    cur.close()
+    conn.close()
+def student_management():
+    conn = connect_db()
+    
+    cur.close()
+    conn.close()
+    
+def student_membership_management():
+    conn = connect_db()
+    
+    cur.close()
+    conn.close()
+    
+def event_registration_management():
+    conn = connect_db()
+    
+    cur.close()
+    conn.close()
+    
+    
+def create_board_member_window():
+    window = tk.Toplevel()
+    window.title("Board Member Management")
 
-    # Event Name Entry
-        tk.Label(add_event_window, text="Event Name:").grid(row=0, column=0, padx=10, pady=10)
-        event_name_entry = tk.Entry(add_event_window)
-        event_name_entry.grid(row=0, column=1, padx=10, pady=10)
+    # Buttons for different management options
+    ttk.Button(window, text="Event Management", command=lambda: event_management(window)).grid(column=0, row=0, sticky=tk.W, pady=10)
+    ttk.Button(window, text="Membership Management", command=membership_management).grid(column=0, row=1, sticky=tk.W, pady=10)
+    ttk.Button(window, text="Student Management", command=student_management).grid(column=0, row=2, sticky=tk.W, pady=10)
+    ttk.Button(window, text="StudentMembership Management", command=student_membership_management).grid(column=0, row=3, sticky=tk.W, pady=10)
+    ttk.Button(window, text="EventRegistration Management", command=event_registration_management).grid(column=0, row=4, sticky=tk.W, pady=10)
 
-    # Event Date Entry
-        tk.Label(add_event_window, text="Event Date (YYYY-MM-DD):").grid(row=1, column=0, padx=10, pady=10)
-        event_date_entry = tk.Entry(add_event_window)
-        event_date_entry.grid(row=1, column=1, padx=10, pady=10)
-
-    # Submit Button
-        submit_btn = tk.Button(add_event_window, text="Submit", command=lambda: submit_new_event(event_name_entry, event_date_entry, add_event_window, root))
-        submit_btn.grid(row=2, column=0, columnspan=2, pady=10)
-        pass
-
-    def submit_new_event(event_name_entry, event_date_entry, add_event_window, root):
-    # Function to insert the new event into the database
-        event_name = event_name_entry.get()
-        event_date = event_date_entry.get()
-
-        conn = connect_db()
-        if conn is not None:
-            cur = conn.cursor()
-            try:
-                cur.execute("INSERT INTO Event (EventName, EventDate) VALUES (%s, %s)", (event_name, event_date))
-                conn.commit()
-                messagebox.showinfo("Success", "Event added successfully.", parent=add_event_window)
-                add_event_window.destroy()  # Close the add event window
-                event_management(root)  # Optionally refresh the event management interface
-            except Exception as e:
-                messagebox.showerror("Error", str(e), parent=add_event_window)
-            finally:
-                cur.close()
-                conn.close()
+    # Example function for one of the management options
+    
+    
+    
 def verify_membership():
     conn = connect_db()
     if conn is not None:
