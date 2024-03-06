@@ -19,6 +19,50 @@ def connect_db():
         return None
 
 
+def submit_delete_registration(membership_id, event_id, window, root):
+    conn = connect_db()
+    if conn is None:
+        messagebox.showwarning("Connection Failed", "Failed to connect to the database.")
+        return
+
+    try:
+        cur = conn.cursor()
+        # Delete the specified registration
+        cur.execute("DELETE FROM EventRegistration WHERE MembershipID = %s AND EventID = %s", (membership_id, event_id))
+        conn.commit()
+
+        if cur.rowcount == 0:  # No rows deleted
+            messagebox.showinfo("Delete Unsuccessful", "No registration found with the provided Membership ID and Event ID.")
+        else:
+            messagebox.showinfo("Delete Successful", "The registration has been successfully deleted.")
+            
+        window.destroy()
+        event_registration_management(root)
+        
+    except Exception as e:
+        messagebox.showerror("Deletion Error", str(e))
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+
+def delete_registration_prompt(event_id, parent_window, root):
+    delete_window = tk.Toplevel(parent_window)
+    delete_window.title("Delete Registration")
+
+    tk.Label(delete_window, text="Membership ID:").grid(row=0, column=0)
+    membership_id_entry = tk.Entry(delete_window)
+    membership_id_entry.grid(row=0, column=1)
+
+    tk.Label(delete_window, text="Event ID:").grid(row=1, column=0)
+    event_id_entry = tk.Entry(delete_window)
+    event_id_entry.insert(0, str(event_id))  # Pre-fill with the event ID, make it read-only if you prefer
+    event_id_entry.grid(row=1, column=1)
+
+    # Delete button
+    delete_btn = tk.Button(delete_window, text="Delete", command=lambda: submit_delete_registration(membership_id_entry.get(), event_id_entry.get(), delete_window, root))
+    delete_btn.grid(row=2, column=0, columnspan=2)
+
 def register_for_event(event_id, parent_window):
     # Create the new window for MembershipID input
     reg_input_window = tk.Toplevel(parent_window)
@@ -32,7 +76,7 @@ def register_for_event(event_id, parent_window):
     submit_btn = tk.Button(reg_input_window, text="Submit", command=lambda: submit_event_registration(event_id, membership_id_entry.get(), reg_input_window))
     submit_btn.grid(row=1, column=0, columnspan=2)
 
-def submit_event_registration(event_id, membership_id, window):
+def submit_event_registration(event_id, membership_id, window,):
     conn = connect_db()
     if conn is None:
         messagebox.showwarning("Connection Failed", "Failed to connect to the database.")
@@ -51,6 +95,7 @@ def submit_event_registration(event_id, membership_id, window):
         conn.commit()
         messagebox.showinfo("Registration Successful", "You have successfully registered for the event.")
         window.destroy()
+        
     except Exception as e:
         messagebox.showerror("Registration Error", str(e))
         conn.rollback()
@@ -389,26 +434,44 @@ def student_membership_management():
     conn.close()
 
 
-def event_registration_management():
+def event_registration_management(root):
+    for widget in root.winfo_children():
+        widget.destroy()
+        
     conn = connect_db()
     if conn is None:
         messagebox.showwarning("Connection Failed", "Failed to connect to the database.")
         return
-    
+
     cur = conn.cursor()
-    cur.execute("SELECT EventID, EventName, EventDate FROM Event")
+    # Fetch events
+    cur.execute("SELECT EventID, EventName, EventDate FROM Event ORDER BY EventDate")
     events = cur.fetchall()
+
+    # Fetch event registrations
+    cur.execute("SELECT er.RegistrationID, e.EventName, e.EventDate, er.MembershipID FROM EventRegistration er JOIN Event e ON er.EventID = e.EventID ORDER BY e.EventDate, er.MembershipID")
+    registrations = cur.fetchall()
     cur.close()
     conn.close()
 
-    # Create the new window for displaying events
+    # Create the new window for displaying events and registrations
     event_reg_window = tk.Toplevel()
     event_reg_window.title("Event Registration Management")
 
-    # Display the events
+    # Section for displaying events
+    ttk.Label(event_reg_window, text="Events").grid(row=0, column=0, columnspan=3)
     for i, event in enumerate(events):
-        ttk.Label(event_reg_window, text=f"{event[1]} ({event[2]})").grid(row=i, column=0)
-        ttk.Button(event_reg_window, text="Register", command=lambda event_id=event[0]: register_for_event(event_id, event_reg_window)).grid(row=i, column=1)
+        ttk.Label(event_reg_window, text=f"{event[1]} ({event[2]})").grid(row=i+1, column=0)
+        ttk.Button(event_reg_window, text="Register", command=lambda event_id=event[0]: register_for_event(event_id, event_reg_window)).grid(row=i+1, column=1)
+        ttk.Button(event_reg_window, text="Delete", command=lambda event_id=event[0]: delete_registration_prompt(event_id, event_reg_window, root)).grid(row=i+1, column=2)
+
+    # Visual separation
+    ttk.Separator(event_reg_window, orient='horizontal').grid(row=len(events)+2, column=0, columnspan=3, sticky='ew', pady=5)
+
+    # Section for displaying event registrations
+    ttk.Label(event_reg_window, text="Event Registrations").grid(row=len(events)+3, column=0, columnspan=3)
+    for i, reg in enumerate(registrations):
+        ttk.Label(event_reg_window, text=f"{reg[1]} ({reg[2]}), Membership ID: {reg[3]}").grid(row=len(events)+4+i, column=0, columnspan=2)
 
 
 
@@ -426,7 +489,7 @@ def create_board_member_window():
     ttk.Button(window, text="StudentMembership Management",
                command=student_membership_management).grid(column=0, row=3, sticky=tk.W, pady=10)
     ttk.Button(window, text="EventRegistration Management",
-               command=event_registration_management).grid(column=0, row=4, sticky=tk.W, pady=10)
+               command=lambda: event_registration_management(window)).grid(column=0, row=4, sticky=tk.W, pady=10)
 
     # Example function for one of the management options
 
